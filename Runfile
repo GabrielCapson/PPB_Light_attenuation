@@ -47,7 +47,7 @@ toc
 %% PLOTS
 %Load experimental results
 %[t,tCOD,sCOD,VS,NH4-N,PO4-P,HAc]
-data_exp = csvread('experimental_DO_high_control.csv');
+data_exp = csvread('data_exp.csv');
 texp = data_exp(:,1);
 tCODexp = data_exp(:,2);
 sCODexp = data_exp(:,3);
