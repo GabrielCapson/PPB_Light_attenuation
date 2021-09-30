@@ -1,0 +1,186 @@
+%% RUNFILE for the PAM1 function
+% 01-07-2021 Author: Gabriel Capson-Tojo gabriel.capson.tojo@usc.es
+% Adapted from Ed Barry e.barry@uq.edu.au
+
+clear; clc;
+%% USER INPUT
+% Read the input data and organise
+data = csvread('dynamicInfluent.csv');   % Raw influent file
+tu = data(:,1); % Time (t) to which raw input (u) is mapped
+
+%----------------------------------------------
+%% Assign variable names to influent data
+HRT = Inf;
+thetaS = Inf;
+V = 0.25;
+
+Ss0 = data(:,2);
+Sac0 = data(:,3);
+Sic0 = data(:,4);
+Sh20 = data(:,5);
+Sin0 = data(:,6);
+Sip0 = data(:,7);
+Si0 = data(:,8);
+XPB0 = data(:,9);
+Xs0 = data(:,10);
+Xi0 = data(:,11);
+
+% Flowrates
+QinVec = data(:,12);
+QslVec = V/thetaS;
+QoutVec = QinVec - QslVec;       
+
+feed = [Ss0, Sac0, Sic0, Sh20, Sin0, ...
+    Sip0, Si0, XPB0, Xs0, Xi0, QinVec, QoutVec];
+
+SAC_ADDED = zeros(length(tu), 1);
+
+uOrig = feed;
+uOrig(:,2) = feed(:,2) + SAC_ADDED;
+tspace = [0 3.5];
+
+%% 
+tic
+[t,y] = ode15s(@(t,y)PAM1_att(t,y,tu, uOrig, V), tspace, uOrig(1,1:10));
+toc
+
+%% PLOTS
+%Load experimental results
+%[t,tCOD,sCOD,VS,NH4-N,PO4-P,HAc]
+data_exp = csvread('experimental_DO_high_control.csv');
+texp = data_exp(:,1);
+tCODexp = data_exp(:,2);
+sCODexp = data_exp(:,3);
+pCODexp = data_exp(:,2) - data_exp(:,3);
+VSexp = data_exp(:,4);
+INexp = data_exp(:,5);
+IPexp = data_exp(:,6);
+%HAcexp = data_exp(:,7);
+
+sCODmod = y(:,1) + y(:,2) + y(:,4) + y(:,7);
+pCODmod = y(:,8) + y(:,9) + y(:,10);
+tCODmod = sCODmod + pCODmod;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+figure(1)
+    subplot(4,1,1)
+    plot(texp,sCODexp,'o')
+    hold on;
+    plot(t,sCODmod,'r');
+    hold off;
+    grid;
+    title('Experimental');
+    ylabel('SCOD (g COD/m3)');
+    xlabel('Time (d)');
+    
+    subplot(4,1,2)
+    plot(texp,tCODexp,'o')
+    hold on;
+    plot(t,tCODmod,'r');
+    hold off;
+    grid;
+    ylabel('TCOD (g COD/m3)');
+    xlabel('Time (d)');
+    xlim([0 3.5]);
+    ylim([0 1500]);
+
+    subplot(4,1,3)
+    plot(texp,INexp,'o')
+    hold on;
+    plot(t,y(:,5),'r');
+    hold off;
+    grid;
+    ylabel('IN (g COD/m3)');
+    xlabel('Time (d)');
+
+    subplot(4,1,4)
+    plot(texp,IPexp,'o')
+    hold on;
+    plot(t,y(:,6),'r');
+    hold off;
+    grid;
+    ylabel('IP (g COD/m3)');
+    xlabel('Time (d)');
+
+    
+figure(2)
+    subplot(3,1,1)
+    plot(t,y(:,1),'r');
+    grid;
+    title('Soluble organics');
+    ylabel('S_V_F_A (g COD/m3)');
+    xlabel('Time (d)');
+
+    subplot(3,1,2)
+    plot(t,y(:,2),'r');
+    grid;
+    ylabel('S_A_C (g COD/m3)');
+    xlabel('Time (d)');
+    
+    subplot(3,1,3)
+    plot(t,y(:,7),'r');
+    grid;
+    ylabel('S_I (g COD/m3)');
+    xlabel('Time (d)');
+    
+figure(3)
+    
+    subplot(3,1,1)
+    plot(t,y(:,9),'r');
+    grid;
+    title('Particulates');
+    ylabel('X_C (g COD/m3)');
+    xlabel('Time (d)');
+
+    subplot(3,1,2)
+    plot(t,y(:,10),'r');
+    grid;
+    ylabel('X_I (g COD/m3)');
+    xlabel('Time (d)');
+    
+    subplot(3,1,3)
+    plot(t,y(:,8),'r');
+    grid;
+    ylabel('X_P_B (g COD/m3)');
+    xlabel('Time (d)');  
+    
+figure(4)
+    subplot(3,1,1)
+    plot(t,y(:,3),'r');
+    grid;
+    title('Nutrients and SO4');
+    ylabel('IC conc. (Kmol C/m3)');
+    xlabel('Time (d)');
+    
+    subplot(3,1,2)
+    plot(t,y(:,5),'r');
+    grid;
+    ylabel('IN conc. (g N/m3)');
+    xlabel('Time (d)');
+    
+    subplot(3,1,3)
+    plot(t,y(:,6),'r');
+    grid;
+    ylabel('IP conc. (g P/m3)');
+    xlabel('Time (d)');
+    
+
+figure(5)
+    title('H2');
+    plot(t,y(:,4),'r');
+    grid;
+    ylabel('H_2 (g COD/m3)');
+    xlabel('Time (d)');
+    
+PAMStateMatrix = y;
+[yy,ts,pHs]=PAM1_att(t(1),y(1,:),tu,uOrig, V);
+
+figure(6)
+    plot(ts,pHs,'r');
+    grid;
+    title('pH');
+    ylabel('pH');
+    xlabel('Time (d)');
+    xlim([0 3.5]);
+    ylim([4 9]);
