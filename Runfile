@@ -41,7 +41,7 @@ tspace = [0 3.5];
 
 %% 
 tic
-[t,y] = ode15s(@(t,y)PAM1_att(t,y,tu, uOrig, V), tspace, uOrig(1,1:10));
+[t,y] = ode15s(@(t,y)PAnM1_attenuation(t,y,tu, uOrig, V), tspace, uOrig(1,1:10));
 toc
 
 %% PLOTS
@@ -174,7 +174,7 @@ figure(5)
     xlabel('Time (d)');
     
 PAMStateMatrix = y;
-[yy,ts,pHs]=PAM1_att(t(1),y(1,:),tu,uOrig, V);
+[yy,ts,pHs]=PAnM1_attenuation(t(1),y(1,:),tu,uOrig, V);
 
 figure(6)
     plot(ts,pHs,'r');
